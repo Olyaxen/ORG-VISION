@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glossy Touch - Modern Glass Design Experience</title>
+    <title>ORG VISION CANVAS</title>
 
     <link rel="stylesheet" href="templatemo-glossy-touch.css">
     <!--
@@ -196,7 +196,7 @@ https://templatemo.com/tm-592-glossy-touch
         }
 
         .dropdown.open .dropdown-content,
-        .dropdown:hover .dropdown-content {
+        .dropdown-content {
             display: flex;
         }
 
@@ -466,6 +466,76 @@ https://templatemo.com/tm-592-glossy-touch
         .node-button-div span+span {
             display: none !important;
         }
+
+        /* --- 添加到 <style> 标签的末尾 --- */
+
+        /* 饼图容器的额外样式 */
+        .service-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 15px;
+            /* 为标题留出空间 */
+        }
+
+        /* 饼图提示框样式 (更新版) */
+        .pie-tooltip {
+            position: absolute;
+            text-align: center;
+            width: auto;
+            padding: 8px 12px;
+            font: 12px sans-serif;
+            background: rgba(20, 30, 50, 0.7);
+            /* 深蓝色半透明背景 */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            /* 细微的白色边框 */
+            border-radius: 8px;
+            pointer-events: none;
+            /* 关键：让鼠标事件穿透提示框 */
+            color: #fff;
+            backdrop-filter: blur(5px);
+            /* 背景模糊，核心的玻璃效果 */
+            -webkit-backdrop-filter: blur(5px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.2s;
+            /* 添加平滑过渡 */
+        }
+
+        .glow-white {
+            text-shadow:
+                0 1px 1px rgba(255, 255, 255, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.3),
+                0 2px 3px rgba(255, 255, 255, 0.2),
+                0 2px 4px rgba(255, 255, 255, 0.1);
+        }
+
+
+        /* 可选：呼吸式扩散动画 */
+        .glow-pulse {
+            animation: glowPulse 2.2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0% {
+                text-shadow:
+                    0 0 2px rgba(255, 255, 255, 0.9),
+                    0 0 6px rgba(255, 255, 255, 0.6);
+            }
+
+            70% {
+                text-shadow:
+                    0 0 6px rgba(255, 255, 255, 0.9),
+                    0 0 16px rgba(255, 255, 255, 0.6),
+                    0 0 28px rgba(255, 255, 255, 0.45),
+                    0 0 40px rgba(255, 255, 255, 0.35);
+            }
+
+            100% {
+                text-shadow:
+                    0 0 2px rgba(255, 255, 255, 0.9),
+                    0 0 6px rgba(255, 255, 255, 0.6);
+            }
+        }
     </style>
 </head>
 
@@ -486,7 +556,146 @@ https://templatemo.com/tm-592-glossy-touch
 
 
     console.log(now);
-    // 放在一个合适的位置，比如 handleFileUpload 函数的上面
+
+
+    /**
+ * 根据指定字段聚合数据
+ * @param {Array} data - 原始数据数组
+ * @param {string} field - 用于聚合的字段名 (例如 'Position_Band')
+ * @returns {Array} - 返回聚合后的数据，格式为 [{key: '...', value: count}, ...]
+ */
+    function aggregateDataByField(data, field) {
+        if (!data || !Array.isArray(data)) return [];
+
+        const counts = d3.rollup(data, v => v.length, d => d[field]);
+        return Array.from(counts, ([key, value]) => ({ key: key || 'Undefined', value }));
+    }
+
+    // 新增：定义一个现代感的蓝色系调色板
+    // 定义一个现代、有设计感的蓝紫色调色板
+    const modernBluePalette = [
+        '#5a189a', // 深邃紫
+        '#0077b6', // 星海蓝
+        '#7b2cbf', // 活力紫
+        '#00b4d8', // 天青蓝
+        '#9d4edd', // 丁香紫
+        '#48cae4', // 碧空蓝
+        '#c77dff', // 柔光紫
+        '#ade8f4'  // 冰晶蓝
+    ];
+
+    /**
+ * 绘制饼图的通用函数 (更新版：现代蓝色玻璃效果)
+ * @param {string} containerSelector - 目标容器的CSS选择器 (例如 '#position-band-chart-container')
+ * @param {Array} data - 聚合后的数据
+ */
+    function createPieChart(containerSelector, data) {
+        const container = d3.select(containerSelector);
+        if (container.empty()) {
+            console.error(`无法找到容器: ${containerSelector}`);
+            return;
+        }
+
+        // 清空旧图表
+        container.select('svg').remove();
+        container.style('position', 'relative');
+
+        // 设置图表尺寸
+        const containerRect = container.node().getBoundingClientRect();
+        const width = containerRect.width * 0.9;
+        const height = 220;
+        const radius = Math.min(width, height) / 2 - 10;
+
+        const svg = container.append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', `translate(${width / 2}, ${height / 2})`);
+
+        // --- 【修改点 1】: 使用新的蓝色调色板 ---
+        // 将 d3.schemeCategory10 替换为我们的 modernBluePalette
+        const color = d3.scaleOrdinal(modernBluePalette);
+
+        // 创建饼图生成器
+        const pie = d3.pie()
+            .value(d => d.value)
+            .sort(null);
+
+        const arc = d3.arc()
+            .innerRadius(0) // 实心饼图
+            .outerRadius(radius);
+
+        // --- 【新增】: 为SVG添加滤镜定义，用于实现磨砂效果 ---
+        const defs = svg.append('defs');
+        const filter = defs.append('filter')
+            .attr('id', 'frosted-glass');
+        filter.append('feGaussianBlur')
+            .attr('in', 'SourceGraphic')
+            .attr('stdDeviation', '0'); // 模糊程度，数值越大越模糊
+
+        // 创建提示框（Tooltip）
+        const tooltip = container.append('div')
+            .attr('class', 'pie-tooltip')
+            .style('opacity', 0);
+
+        // 绘制扇区
+        svg.selectAll('path')
+            .data(pie(data))
+            .enter()
+            .append('path')
+            .attr('d', arc)
+            // --- 【修改点 2】: 应用玻璃效果样式 ---
+            .attr('fill', d => color(d.data.key))
+            .attr('fill-opacity', 0.5) // 设置填充不透明度，营造半透明感
+            .attr('stroke', 'rgba(255, 255, 255, 0.4)') // 添加白色描边，模拟高光边缘
+            .style('stroke-width', '2px') // 描边宽度
+
+            .style('filter', 'url(#frosted-glass)') // 应用上面定义的模糊滤镜
+            .on('mouseover', function (event, d) {
+                // 鼠标悬浮时，提高不透明度并移除滤镜，使其“清晰”高亮
+                d3.select(this).transition().duration(200)
+                    .attr('fill-opacity', 0.7)
+                    .style('filter', null);
+
+                tooltip.transition().duration(200).style('opacity', .9);
+                tooltip.html(`<strong>${d.data.key}</strong><br/>Count: ${d.data.value}`)
+                    .style('left', (event.offsetX + 10) + 'px')
+                    .style('top', (event.offsetY - 20) + 'px');
+            })
+            .on('mouseout', function () {
+                // 鼠标移开后，恢复半透明和磨砂效果
+                d3.select(this).transition().duration(500)
+                    .attr('fill-opacity', 0.5)
+                    .style('filter', 'url(#frosted-glass)');
+
+                tooltip.transition().duration(500).style('opacity', 0);
+            });
+
+        // 添加图例
+        const legend = svg.selectAll('.legend')
+            .data(data.map(d => d.key))
+            .enter().append('g')
+            .attr('class', 'legend')
+            .attr('transform', (d, i) => `translate(${radius + 20}, ${i * 20 - height / 2 + 10})`);
+
+        legend.append('rect')
+            .attr('width', 18)
+            .attr('height', 18)
+            .style('fill', color)
+            // --- 【修改点 3】: 让图例也拥有玻璃效果 ---
+            .style('fill-opacity', 0.7)
+            .style('stroke', '#ffffff')
+            .style('stroke-width', '1px');
+
+        legend.append('text')
+            .attr('x', 24)
+            .attr('y', 9)
+            .attr('dy', '.35em')
+            .style('fill', '#fff')
+            .text(d => d);
+    }
+
+
     function sortDataByBand(data) {
         const bandOrder = { "1": 0, "2": 1, "3": 2, "4": 3, "AL": 4 };
         // 使用 slice() 创建一个浅拷贝，避免修改原始数组
@@ -543,11 +752,68 @@ https://templatemo.com/tm-592-glossy-touch
             globalData = [...uploadedData]; // 如果还在用 globalData，也这样初始化
 
             alert('File uploaded！Please enter whole name');
+            updateHomepageStats();   // ← 新增：刷新主页“Total Positions”
+            // ▼▼▼【新增代码】从这里开始 ▼▼▼
+
+            // 1. 聚合 Position_Band 数据并生成饼图
+            const positionBandData = aggregateDataByField(originalData, 'Position_Band');
+            if (positionBandData.length > 0) {
+                createPieChart('#position-band-chart-container', positionBandData);
+            }
+
+            // 2. 聚合 Company_Descr_Short 数据并生成饼图
+            // 注意：您的CSV文件中似乎没有 Company_Descr_Short 字段，
+            // 这里我暂时使用 Department_Descr_Short 作为示例。
+            // 如果您的CSV中有这个字段，请直接替换。
+            const entityData = aggregateDataByField(originalData, 'Company_Descr_Short');
+            if (entityData.length > 0) {
+                createPieChart('#entity-chart-container', entityData);
+            }
+
+            // ▲▲▲【新增代码】到这里结束 ▲▲▲
+
             initDateSlider();
         };
 
         reader.readAsText(file);
     }
+    // 更新主页统计卡片里“Total Positions”的数字
+    function updateHomepageStats() {
+        if (!Array.isArray(originalData) || originalData.length === 0) return;
+
+        // 只统计真实记录，过滤掉虚拟节点
+        const rows = originalData.filter(r => r && !r.isVirtual);
+        const total = rows.length;
+
+        // Display_Name 为空、全空格，或为 'NA' 等视为“空岗”
+        const isEmptyName = v => v == null || String(v).trim() === '' || String(v).trim().toLowerCase() === 'na';
+        const vacant = rows.filter(r => isEmptyName(r.Display_Name)).length;
+        const rate = total ? (vacant / total * 100) : 0;
+
+        // 根据 stat-label 精确找到卡片（大小写不敏感，自动忽略多空格）
+        const norm = s => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        const findCard = (labels) => {
+            const wanted = labels.map(norm);
+            const cards = document.querySelectorAll('#home .stats .stat-card');
+            for (const card of cards) {
+                const labelEl = card.querySelector('.stat-label');
+                if (wanted.includes(norm(labelEl?.textContent))) return card;
+            }
+            return null;
+        };
+        const setNumber = (card, value) => {
+            if (!card) return;
+            const el = card.querySelector('.stat-number');
+            if (el) el.textContent = value;
+        };
+
+        // 写入三个指标
+        setNumber(findCard(['Total Positions']), String(total));
+        setNumber(findCard(['Vacant Positions']), String(vacant));
+        setNumber(findCard(['Vacancy Rate']), `${rate.toFixed(1)}%`);
+    }
+
+
 
     // 替换掉旧的 searchPerson 函数
 
@@ -592,6 +858,7 @@ https://templatemo.com/tm-592-glossy-touch
 
                 choiceElement.innerHTML = `
         <h4>${person.Display_Name}</h4>
+        <p>${person.Position_Number}</p>
         <p>${person.Department_Descr_Short}</p>
         <p>${person.Position_Descr}</p>
         <p>${person.Effective_Date}</p>
@@ -862,22 +1129,39 @@ https://templatemo.com/tm-592-glossy-touch
         const panel = document.getElementById('chart-config-panel');
         const toggleBtn = document.getElementById('config-toggle-btn');
 
-        if (panel && toggleBtn) {
-            if (isConfigPanelVisible) {
+        if (!panel || !toggleBtn) return;
+
+        if (isConfigPanelVisible) {
+            // 先确保可见（解除 display:none），然后触发过渡
+            panel.style.display = 'block';            // 从渲染树中恢复
+            // 保证下一帧应用 transform/opacity，触发 CSS transition
+            requestAnimationFrame(() => {
                 panel.style.transform = 'translateX(0)';
                 panel.style.opacity = '1';
                 panel.style.pointerEvents = 'auto';
-                toggleBtn.innerHTML = '⚙️';
-                toggleBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            } else {
-                panel.style.transform = 'translateX(20px)';
-                panel.style.opacity = '0';
-                panel.style.pointerEvents = 'none';
-                toggleBtn.innerHTML = '⚙️';
-                toggleBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            }
+            });
+            toggleBtn.innerHTML = '⚙️';
+            toggleBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        } else {
+            // 先做淡出/移动动画
+            panel.style.transform = 'translateX(20px)';
+            panel.style.opacity = '0';
+            panel.style.pointerEvents = 'none';
+            toggleBtn.innerHTML = '⚙️';
+            toggleBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+
+            // 隐藏动画结束后彻底 remove（避免挡住事件）
+            const onTransEnd = (e) => {
+                // 仅在面板本身的 transitionend 时处理一次
+                if (e.target === panel) {
+                    panel.style.display = 'none';
+                    panel.removeEventListener('transitionend', onTransEnd);
+                }
+            };
+            panel.addEventListener('transitionend', onTransEnd);
         }
     }
+
 
 
     // 2. 字段配置定义
@@ -886,7 +1170,8 @@ https://templatemo.com/tm-592-glossy-touch
         { id: 'department', label: 'Department', field: 'Department_Descr_Short', default: true },
         { id: 'PositionBand', label: 'Position Band', field: 'Position_Band', default: true },
         { id: 'salaryGrade', label: 'Salary Grade', field: 'Salary_Grade', default: true },
-        { id: 'effectiveDate', label: 'Effective Date', field: 'Effective_Date', default: true },
+        { id: 'posentrydate', label: 'Pos Entry Date', field: 'Pos_Entry_Date', default: true },
+        { id: 'effectiveDate', label: 'Effective Date', field: 'Effective_Date', default: false },
         { id: 'Span_of_Control', label: 'Span of Control', field: 'Span_of_Control', default: true },
         { id: 'totalStaffs', label: 'Total Staffs', field: 'Staffs', default: true },
         { id: 'PositionDescr', label: 'Position Descr', field: 'Position_Descr', default: true },
@@ -960,7 +1245,7 @@ https://templatemo.com/tm-592-glossy-touch
       `;
         }
         // --- 修改结束 ---
-        const dynamicSrc = `https://corpdir.sharepoint.com/sites/DWT_HRGCPowerBICommunity-DataWorkers/Shared%20Documents/HR%20Data%20Workers/Employee%20Pictures/${d.data.Job_User_ID}.png`;
+        const dynamicSrc = `./images/${d.data.Job_User_ID}.png`;
         const defaultSrc = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF8AAABfCAYAAACOTBv1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABdzSURBVHhe5Z0JtNXTF8ePh1BJRElKUchYKilKKaVBKEKUTIlFahWRpfxTFrLM46JQallRSYhMadBgKEVSkkqJzGPG8z+f/e6+zvu9c++79707vPiutd+97zec3/nts8/e+5x9zr7bGWOso3KHGjVqmHr16pnatWubvffe2+y2226mcuXKZpdddjE77bST2XHHHU1BQYH566+/zO+//262bt1qfvnlF/PTTz+Zb775xmzatMl8+umnZu3atebnn3+OlVq+kBfmwzRrrZCiQYMG5rDDDjMHHXSQqVOnjtlnn33MnnvuaapWrWp23XVXs/POO5sKFSoI07fffnuh7bbbzvz999/SAH/++af5448/zG+//SaN8OOPP5pvv/3WfPHFF9IQ69atMx9++KF55513pHHKA/LCfJgG4w899FBz7LHHmkMOOcQceOCBZt999xWG77777iLdXFdW0DA0Bg3x5Zdfmk8++cSsXr3avP3222bu3Lnm66+/jl2Ze+Sc+agTGH7MMceYI4880tSvX99Ur17dVKxYUXpEtkEP+eGHH8xnn30mPeG9994zs2fPNsuWLcu5esoZ81ElJ554ojnhhBPM4YcfLv+jTtJhOLr9119/FWlG/6OGYCTH+Y5qQi0l6jGq5vQ8DfHVV19Jb6AnPP/882bhwoVSZkg1ZhpZZz6S3qVLF3PSSSeZxo0biwFFpSQDRvPzzz8X6URX6ydMQa8fddRR5txzzzV169Y1L730kpkyZYowcYcddhC1xXFUGJ808l577SXPhJHRhlHmUvbHH38szKe8t956S+qRTWSM+VFJQRJh+mmnnSYqBiYkYjoSCLPff/998+abb4pOxih+//335rvvvpNPdDYSDi688EJz7bXXmgMOOECk9brrrhP1AfCGsBl4R/q5xx57SIM1a9bMHHzwwfI/BhtonWkUiEZYuXKleeONN8zYsWPNqlWr4u+UDVBymclVPP69RYsW9tZbb7VLliyxzti5uhfCeSZCis2bN1vHPDtgwADbqVMn6xhkq1WrZh1jipQdpeuvv17uBe+++651NiR4nRLluZ5gnRDYbt262VGj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`;
 
 
@@ -984,7 +1269,7 @@ https://templatemo.com/tm-592-glossy-touch
             gradientColor = 'background: skyblue;';
         } else if (d.data.Position_Band === 'AL') {
             // 判断是否有子节点
-            const hasChildren = d.children && d.children.length > 0;
+            const hasChildren = d.data.Direct_Report > 0;
             gradientColor = hasChildren ? 'background: gray;' : 'background: white;';
         }
 
@@ -1089,6 +1374,11 @@ https://templatemo.com/tm-592-glossy-touch
       ${fieldConfigState.effectiveDate ? `
       <div class="info-row">
         <div><span class="label">Effective Date:</span>${d.data.Effective_Date}</div>
+      </div>` : ''}
+
+      ${fieldConfigState.posentrydate ? `
+      <div class="info-row">
+        <div><span class="label">Pos.Entry Date:</span>${d.data.Pos_Entry_Date}</div>
       </div>` : ''}
 
       ${fieldConfigState.Span_of_Control || fieldConfigState.totalStaffs ? `
@@ -1389,6 +1679,7 @@ https://templatemo.com/tm-592-glossy-touch
             const rk = document.getElementById('new_Risk_Assessment').value.trim();
             const rm = document.getElementById('new_Mark_in_OrgChart').value.trim();
             const dt = document.getElementById('new_Effective_Date').value.trim();
+            const pe = document.getElementById('new_Pos_Entry_Date').value.trim();
             const rm2 = document.getElementById('new_Remark_2').value.trim();
             const rm3 = document.getElementById('new_Remark_3').value.trim();
             if (!pos) {
@@ -1415,6 +1706,7 @@ https://templatemo.com/tm-592-glossy-touch
                 Risk_Assessment: rk,
                 Mark_in_OrgChart: rm,
                 Effective_Date: dt,
+                Pos_Entry_Date:pe,
                 Remark_2: rm2,
                 Remark_3: rm3,
                 _uniqueId: `new-${Date.now()}` // 新增：为新条目生成唯一ID
@@ -1572,6 +1864,7 @@ https://templatemo.com/tm-592-glossy-touch
             document.getElementById('modify_Cost_Center').value = node.Cost_Center || '';
             document.getElementById('modify_FTE_Type_Funding_Status').value = node.FTE_Type_Funding_Status || '';
             document.getElementById('modify_Risk_Assessment').value = node.Risk_Assessment || '';
+            document.getElementById('modify_Pos_Entry_Date').value = node.Pos_Entry_Date || '';
             document.getElementById('modify_Mark_in_OrgChart').value = node.Mark_in_OrgChart || '';
             document.getElementById('modify_Remark_2').value = node.Remark_2 || '';
             document.getElementById('modify_Remark_3').value = node.Remark_3 || '';
@@ -1602,6 +1895,7 @@ https://templatemo.com/tm-592-glossy-touch
             nodeToModify.Cost_Center = document.getElementById('modify_Cost_Center').value;
             nodeToModify.FTE_Type_Funding_Status = document.getElementById('modify_FTE_Type_Funding_Status').value;
             nodeToModify.Risk_Assessment = document.getElementById('modify_Risk_Assessment').value;
+            nodeToModify.Pos_Entry_Date = document.getElementById('modify_Pos_Entry_Date').value;
             nodeToModify.Mark_in_OrgChart = document.getElementById('modify_Mark_in_OrgChart').value;
             nodeToModify.Remark_2 = document.getElementById('modify_Remark_2').value;
             nodeToModify.Remark_3 = document.getElementById('modify_Remark_3').value;
@@ -1661,6 +1955,22 @@ https://templatemo.com/tm-592-glossy-touch
         document.addEventListener('click', () => {
             dropdown.classList.remove('open');
         });
+
+        // ▼▼▼ 新增的核心代码 ▼▼▼
+        /**
+         * @description 使用一个只包含表头的CSV字符串来初始化应用
+         */
+        function initializeWithEmptyData() {
+            // 定义一个“空”的CSV，只包含必要的列标题
+            const emptyCsvHeaders = "Position_Number,Reports_To_Position_Number,Display_Name,Position_Descr,Department_Descr_Short,Position_Band,Salary_Grade,FTE_Type_Funding_Status,Cost_Center,Risk_Assessment,Pos_Entry_Date,Mark_in_OrgChart,Remark_2,Remark_3,Effective_Date";
+
+            // 使用这个空数据来处理和初始化应用状态
+            processCsvData(emptyCsvHeaders);
+        }
+
+        // 页面加载后立即执行初始化
+        initializeWithEmptyData();
+        // ▲▲▲ 新增的核心代码 ▲▲▲
 
 
     });
@@ -1915,7 +2225,7 @@ https://templatemo.com/tm-592-glossy-touch
         const columns = [
             "Position_Number", "Reports_To_Position_Number", "Display_Name", "Position_Descr",
             "Department_Descr_Short", "Position_Band", "Salary_Grade", "FTE_Type_Funding_Status",
-            "Cost_Center", "Risk_Assessment", "Mark_in_OrgChart", "Remark_2", "Remark_3",
+            "Cost_Center", "Risk_Assessment","Pos_Entry_Date", "Mark_in_OrgChart", "Remark_2", "Remark_3",
             "Effective_Date", "id", "parentId", "Span_of_Control", "Direct_Report", "Staffs"
         ].filter(c => rows.some(r => Object.prototype.hasOwnProperty.call(r, c)));
 
@@ -2139,6 +2449,115 @@ https://templatemo.com/tm-592-glossy-touch
         modal.style.display = 'flex';
     }
 
+    /**
+ * @description 接收CSV文本，解析并初始化整个应用
+ * @param {string} csvText - CSV格式的字符串
+ */
+    function processCsvData(csvText) {
+        const data = d3.csvParse(csvText);
+        let uniqueIdCounter = 0;
+
+        uploadedData = data.map(d => {
+            // ... (这里是您 handleFileUpload 函数中所有处理 d.Position_Band 和 return 对象的代码，完全不变)
+            switch (d.Position_Band) {
+                case '001': d.Position_Band = '1'; break;
+                case '1': d.Position_Band = '1'; break;
+                case '002': d.Position_Band = '2'; break;
+                case '2': d.Position_Band = '2'; break;
+                case '003': d.Position_Band = '3'; break;
+                case '3': d.Position_Band = '3'; break;
+                case '004': d.Position_Band = '4'; break;
+                case '4': d.Position_Band = '4'; break;
+                case 'B': d.Position_Band = 'B'; break;
+                default: d.Position_Band = 'AL';
+            }
+            return {
+                ...d,
+                id: d.Position_Number,
+                parentId: d.Reports_To_Position_Number,
+                _uniqueId: `csv-${uniqueIdCounter++}`
+            };
+        });
+
+        // 将处理后的数据保存到全局变量
+        originalData = JSON.parse(JSON.stringify(uploadedData));
+        editedData = JSON.parse(JSON.stringify(uploadedData));
+        globalData = [...uploadedData];
+
+        // 更新主页统计和图表
+        updateHomepageStats();
+        const positionBandData = aggregateDataByField(originalData, 'Position_Band');
+        if (positionBandData.length > 0) {
+            createPieChart('#position-band-chart-container', positionBandData);
+        }
+        const entityData = aggregateDataByField(originalData, 'Company_Descr_Short');
+        if (entityData.length > 0) {
+            createPieChart('#entity-chart-container', entityData);
+        }
+
+        // 初始化日期滑块
+        initDateSlider();
+
+        // 清空图表区域和旧数据，为用户操作做准备
+        document.querySelector('.chart-container').innerHTML = '<div style="color: #fff; text-align: center; padding-top: 50px;"></div>';
+        data_by_position = null;
+    }
+
+    /*function exportChartAsPDF() {
+    if (!chart) {
+      alert("Please generate a chart first before exporting!");
+      return;
+    }
+
+    // Use the chart's built-in export function which leverages html2canvas
+    chart.exportImg({
+      save: false, // We don't want to trigger a browser download of the image
+      full: true, // Capture the entire chart, not just the visible part
+      onLoad: (base64) => {
+        // The onLoad callback receives the chart as a base64 encoded image
+        const pdf = new jspdf.jsPDF({
+          orientation: 'landscape', // The chart is usually wider than it is tall
+        });
+        const img = new Image();
+        img.src = base64;
+
+        img.onload = function () {
+          const imgWidth = img.width;
+          const imgHeight = img.height;
+
+          // PDF page dimensions in the current orientation (landscape)
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+
+          // Maintain aspect ratio, leaving a 5pt margin on each side
+          const ratio = Math.min((pdfWidth - 10) / imgWidth, (pdfHeight - 10) / imgHeight);
+
+          const newImgWidth = imgWidth * ratio;
+          const newImgHeight = imgHeight * ratio;
+
+          // Center the image
+          const marginX = (pdfWidth - newImgWidth) / 2;
+          const marginY = (pdfHeight - newImgHeight) / 2;
+
+          pdf.addImage(
+            img,
+            'PNG',
+            marginX,
+            marginY,
+            newImgWidth,
+            newImgHeight
+          );
+          pdf.save('organization-chart.pdf');
+        };
+
+        img.onerror = function () {
+          alert("An error occurred while loading the chart image for PDF export.");
+        }
+      },
+    });
+  }*/
+
+
 
 </script>
 
@@ -2160,13 +2579,32 @@ https://templatemo.com/tm-592-glossy-touch
                     <div class="logo-icon">
                         <img src="images/ORG.png" alt="Org Vision logo" style="width:75px;height:auto;display:block;">
                     </div>
-                    <span style="color:#1a9fe2">ORG VISION CANVAS</span>
+                    <svg width="100%" height="100" viewBox="0 0 900 100" xmlns="http://www.w3.org/2000/svg" role="img"
+                        aria-label="Animated gradient ORG VISION CANVAS">
+                        <defs>
+                            <linearGradient id="g-anim" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#1a9fe2" />
+                                <stop offset="50%" stop-color="#0b63c8" />
+                                <stop offset="100%" stop-color="#1a9fe2" />
+                                <!-- 用 animateTransform 让渐变移动（兼容性好） -->
+                                <animate attributeName="x1" values="0%;-50%;0%" dur="3s" repeatCount="indefinite" />
+                                <animate attributeName="x2" values="100%;50%;100%" dur="3s" repeatCount="indefinite" />
+                            </linearGradient>
+                        </defs>
+
+                        <text x="0" y="70" font-family="'Segoe UI', Tahoma, Verdana" font-size="50" font-weight="640"
+                            fill="url(#g-anim)">
+                            ORG VISION CANVAS
+                        </text>
+                    </svg>
+
+
                 </div>
                 <div class="nav-links">
                     <a href="#" onclick="showPage('home')" class="active">Home</a>
                     <a href="#" onclick="showPage('Canvas')">Canvas</a>
-                    <a href="#" onclick="showPage('services')">Services</a>
-                    <a href="#" onclick="showPage('contact')">Contact</a>
+
+                    <a href="#" onclick="showPage('Guidance')">Guidance</a>
                 </div>
             </nav>
         </div>
@@ -2181,59 +2619,44 @@ https://templatemo.com/tm-592-glossy-touch
                         <img src="images/templatemo-futuristic-girl.jpg" alt="Modern Technology Interaction" />
                     </div>
                     <div class="hero-content">
-                        <h1>Welcome to ORG VISION Canvas</h1>
-                        <p>Experience cutting-edge glass morphism design that brings depth and elegance to modern web
-                            interfaces. Clean, translucent, and beautifully interactive.</p>
-                        <button onclick="document.getElementById('fileInput').click()" class="cta-button">
-                            Upload CSV File
+                        <h1>Welcome to ORG VISION CANVAS</h1>
+                        <p>ORG VISION CANVAS — interactive, zoomable org charts that turn your org into a living map: inspect hierarchy, positions instantly.</p>
+                        <button onclick="document.getElementById('fileInput').click()" class="cta-button-home">
+                            Upload
                         </button>
                     </div>
 
                 </section>
 
-                <section class="features">
-                    <div class="feature-card glass">
-                        <div class="feature-icon">✨</div>
-                        <h3>Modern Design</h3>
-                        <p>Beautiful glass morphism effects with backdrop blur and translucent elements that create
-                            depth and visual hierarchy.</p>
+                <section class="stats">
+                    <div class="stat-card glass">
+                        <div class="stat-number">Null</div>
+                        <div class="stat-label">Total Positions</div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-number">Null</div>
+                        <div class="stat-label">Vacant Positions</div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-number">Null</div>
+                        <div class="stat-label">Vacancy Rate</div>
                     </div>
 
-                    <div class="feature-card glass">
-                        <div class="feature-icon">⚡</div>
-                        <h3>Fast Performance</h3>
-                        <p>Optimized animations and effects that maintain smooth 60fps performance across all modern
-                            browsers and devices.</p>
-                    </div>
-
-                    <div class="feature-card glass">
-                        <div class="feature-icon">📱</div>
-                        <h3>Responsive</h3>
-                        <p>Fully responsive design that adapts beautifully to any screen size, from mobile phones to
-                            desktop displays.</p>
-                    </div>
-
-                    <div class="feature-card glass">
-                        <div class="feature-icon">🎨</div>
-                        <h3>Interactive UI</h3>
-                        <p>Engaging hover effects, smooth transitions, and micro-animations that create delightful user
-                            experiences.</p>
-                    </div>
-
-                    <div class="feature-card glass">
-                        <div class="feature-icon">🔒</div>
-                        <h3>Secure & Safe</h3>
-                        <p>Built with modern security standards and best practices to ensure your data and user privacy
-                            are protected.</p>
-                    </div>
-
-                    <div class="feature-card glass">
-                        <div class="feature-icon">🚀</div>
-                        <h3>Easy Integration</h3>
-                        <p>Simple to implement and customize for any project with clean, well-documented code and
-                            flexible components.</p>
-                    </div>
                 </section>
+                <section class="services-grid">
+                    <div class="service-card glass">
+                        <div id="position-band-chart-container" class="service-header">
+                            <h3>Position Pand</h3>
+                        </div>
+                    </div>
+                    <div class="service-card glass">
+                        <div id="entity-chart-container" class="service-header">
+                            <h3>Entity</h3>
+                        </div>
+                    </div>
+
+                </section>
+
             </div>
         </div>
     </div>
@@ -2313,7 +2736,9 @@ https://templatemo.com/tm-592-glossy-touch
                 <h3>Add Person</h3>
                 <div class="form-group"><label for="new_Position_Number">Position Number</label><input
                         id="new_Position_Number" type="text" placeholder="e.g.,CND00003"></div>
-                <div class="form-group"><label for="new_Effective_Date">Effective Date</label><input
+                <div class="form-group"><label for="new_Pos_Entry_Date">Pos.Entry Date</label><input
+                        id="new_Pos_Entry_Date" type="text" placeholder="e.g.,YYYY-MM-DD"></div>
+                        <div class="form-group"><label for="new_Effective_Date">Effective Date</label><input
                         id="new_Effective_Date" type="text" placeholder="e.g.,YYYY-MM-DD"></div>
                 <div class="form-group"><label for="new_Reports_To_Position_Number">Supervisor Position
                         Number</label><input id="new_Reports_To_Position_Number" type="text"
@@ -2354,6 +2779,8 @@ https://templatemo.com/tm-592-glossy-touch
                 <h3>Modify Person</h3>
                 <div class="form-group"><label for="modify_Position_Number">Position Number</label><input
                         id="modify_Position_Number" type="text" readonly style="background-color: #555;"></div>
+                <div class="form-group"><label for="modify_Pos_Entry_Date">Pos.Entry Date</label><input
+                        id="modify_Pos_Entry_Date" type="text" placeholder="e.g.,YYYY-MM-DD"></div>
                 <div class="form-group"><label for="modify_Effective_Date">Effective Date</label><input
                         id="modify_Effective_Date" type="text" placeholder="e.g.,YYYY-MM-DD"></div>
                 <div class="form-group"><label for="modify_Reports_To_Position_Number">Supervisor Position
@@ -2412,137 +2839,14 @@ https://templatemo.com/tm-592-glossy-touch
 
     </div>
 
-    <!-- SERVICES PAGE -->
-    <div id="services" class="page">
-        <div class="container">
-            <div class="content-wrapper">
-                <section class="hero glass">
-                    <h1>Our Services</h1>
-                    <p>Comprehensive design and development solutions tailored to your needs</p>
-                </section>
 
-                <section class="services-grid">
-                    <div class="service-card glass">
-                        <div class="service-header">
-                            <div class="service-icon">🎨</div>
-                            <h3>UI/UX Design</h3>
-                        </div>
-                        <p>Create stunning user interfaces with modern design principles, focusing on usability and
-                            aesthetic appeal.</p>
-                        <ul class="service-features">
-                            <li>User Research & Analysis</li>
-                            <li>Wireframing & Prototyping</li>
-                            <li>Visual Design & Branding</li>
-                            <li>Responsive Design</li>
-                        </ul>
-                    </div>
-
-                    <div class="service-card glass">
-                        <div class="service-header">
-                            <div class="service-icon">💻</div>
-                            <h3>Web Development</h3>
-                        </div>
-                        <p>Build fast, secure, and scalable websites using the latest web technologies and best
-                            practices.</p>
-                        <ul class="service-features">
-                            <li>Frontend Development</li>
-                            <li>Backend Integration</li>
-                            <li>Performance Optimization</li>
-                            <li>SEO Implementation</li>
-                        </ul>
-                    </div>
-
-                    <div class="service-card glass">
-                        <div class="service-header">
-                            <div class="service-icon">📱</div>
-                            <h3>Mobile Apps</h3>
-                        </div>
-                        <p>Develop native and cross-platform mobile applications that deliver exceptional user
-                            experiences.</p>
-                        <ul class="service-features">
-                            <li>iOS & Android Development</li>
-                            <li>Cross-platform Solutions</li>
-                            <li>App Store Optimization</li>
-                            <li>Maintenance & Updates</li>
-                        </ul>
-                    </div>
-
-                    <div class="service-card glass">
-                        <div class="service-header">
-                            <div class="service-icon">🚀</div>
-                            <h3>Digital Strategy</h3>
-                        </div>
-                        <p>Strategic consulting to help your business thrive in the digital landscape with data-driven
-                            insights.</p>
-                        <ul class="service-features">
-                            <li>Digital Transformation</li>
-                            <li>Analytics & Reporting</li>
-                            <li>Growth Strategy</li>
-                            <li>Technology Consulting</li>
-                        </ul>
-                    </div>
-
-                    <div class="service-card glass">
-                        <div class="service-header">
-                            <div class="service-icon">☁️</div>
-                            <h3>Cloud Solutions</h3>
-                        </div>
-                        <p>Modernize your infrastructure with scalable cloud services and seamless migration strategies.
-                        </p>
-                        <ul class="service-features">
-                            <li>Cloud Migration</li>
-                            <li>DevOps & Automation</li>
-                            <li>Infrastructure as Code</li>
-                            <li>24/7 Monitoring</li>
-                        </ul>
-                    </div>
-
-                    <div class="service-card glass">
-                        <div class="service-header">
-                            <div class="service-icon">🔐</div>
-                            <h3>Cybersecurity</h3>
-                        </div>
-                        <p>Protect your digital assets with comprehensive security solutions and threat protection.</p>
-                        <ul class="service-features">
-                            <li>Security Auditing</li>
-                            <li>Penetration Testing</li>
-                            <li>Data Protection</li>
-                            <li>Compliance Management</li>
-                        </ul>
-                    </div>
-                </section>
-            </div>
-        </div>
-    </div>
 
     <!-- CONTACT PAGE -->
-    <div id="contact" class="page">
+    <div id="Guidance" class="page">
         <div class="container">
             <div class="content-wrapper">
                 <section class="contact-grid">
-                    <div class="contact-form glass">
-                        <h2>Get In Touch</h2>
-                        <form>
-                            <div class="form-group">
-                                <label for="name">Full Name</label>
-                                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email Address</label>
-                                <input type="email" id="email" name="email" placeholder="Enter your email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="subject">Subject</label>
-                                <input type="text" id="subject" name="subject" placeholder="What's this about?">
-                            </div>
-                            <div class="form-group">
-                                <label for="message">Message</label>
-                                <textarea id="message" name="message" placeholder="Tell us about your project..."
-                                    required></textarea>
-                            </div>
-                            <button type="submit" class="cta-button">Send Message</button>
-                        </form>
-                    </div>
+
 
                     <div class="contact-info glass">
                         <h2>Contact Information</h2>
@@ -2551,23 +2855,18 @@ https://templatemo.com/tm-592-glossy-touch
                             <div class="contact-item-icon">📧</div>
                             <div class="contact-item-text">
                                 <h4>Email</h4>
-                                <p>hello@glossytouch.com</p>
+                                <p>yuexin.li@mercedes-benz.com</p>
+                                <p>kieso.jan@mercedes-benz.com</p>
                             </div>
                         </div>
 
-                        <div class="contact-item">
-                            <div class="contact-item-icon">📞</div>
-                            <div class="contact-item-text">
-                                <h4>Phone</h4>
-                                <p>+1 (555) 123-4567</p>
-                            </div>
-                        </div>
+
 
                         <div class="contact-item">
                             <div class="contact-item-icon">📍</div>
                             <div class="contact-item-text">
                                 <h4>Address</h4>
-                                <p>123 Design Street<br>Creative District, CD 12345</p>
+                                <p>LSH Tower A 16F</p>
                             </div>
                         </div>
 
@@ -2575,29 +2874,13 @@ https://templatemo.com/tm-592-glossy-touch
                             <div class="contact-item-icon">🕒</div>
                             <div class="contact-item-text">
                                 <h4>Business Hours</h4>
-                                <p>Mon-Fri: 9AM-6PM<br>Sat-Sun: 10AM-4PM</p>
+                                <p>Monday-Friday: 9AM-6PM</p>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <section class="contact-map-section">
-                    <div class="contact-map glass">
-                        <h2>Find Us</h2>
-                        <div class="map-container">
-                            <div class="map-placeholder">
-                                <div class="map-placeholder-icon">🗺️</div>
-                                <p><strong>Interactive Map Area</strong></p>
-                                <p>123 Design Street</p>
-                                <p>Creative District, CD 12345</p>
-                                <p style="margin-top: 15px; font-size: 12px; opacity: 0.7;">
-                                    Map integration can be added with<br>
-                                    Google Maps, OpenStreetMap, or Mapbox
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+
             </div>
         </div>
     </div>
