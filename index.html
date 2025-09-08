@@ -751,7 +751,7 @@ https://templatemo.com/tm-592-glossy-touch
             editedData = JSON.parse(JSON.stringify(uploadedData)); // 这是我们未来操作的“源数据”
             globalData = [...uploadedData]; // 如果还在用 globalData，也这样初始化
 
-            alert('File uploaded！Please enter whole name');
+            alert('File uploaded！Please enter whole name at Canvas page');
             updateHomepageStats();   // ← 新增：刷新主页“Total Positions”
             // ▼▼▼【新增代码】从这里开始 ▼▼▼
 
@@ -2223,11 +2223,11 @@ https://templatemo.com/tm-592-glossy-touch
 
         // 可选：指定列顺序；不指定则 d3 会按对象 key 顺序导出
         const columns = [
-            "Position_Number", "Reports_To_Position_Number", "Display_Name", "Position_Descr",
-            "Department_Descr_Short", "Position_Band", "Salary_Grade", "FTE_Type_Funding_Status",
-            "Cost_Center", "Risk_Assessment","Pos_Entry_Date", "Mark_in_OrgChart", "Remark_2", "Remark_3",
-            "Effective_Date", "id", "parentId", "Span_of_Control", "Direct_Report", "Staffs"
-        ].filter(c => rows.some(r => Object.prototype.hasOwnProperty.call(r, c)));
+            "Effective_Date","Pos_Entry_Date","Company_Descr_Short","Dept_ID","Department_Descr_Short","Position_Number","Job_User_ID",  "Display_Name","Reports_To_Position_Number", 
+             "Job_Supervisor_ID","Job_Supervisor_Name","Position_Band", "Salary_Grade","Position_Descr","Position_Status","Direct_Report", "Span_of_Control","Staffs",
+            "Flag_AsOfDatePosition","Flag_FuturePosition","Flag_TnF","FTE_Type_Funding_Status","Cost_Center", "Risk_Assessment", "Mark_in_OrgChart", "Remark_2", "Remark_3",
+            
+        ];
 
         const csv = d3.csvFormat(rows, columns); // ← 官方格式化函数（d3-dsv）
 
@@ -2855,8 +2855,8 @@ https://templatemo.com/tm-592-glossy-touch
                             <div class="contact-item-icon">📧</div>
                             <div class="contact-item-text">
                                 <h4>Email</h4>
-                                <p>oaocharlie@icloud.com</p>
-                                
+                                <p>yuexin.li@mercedes-benz.com</p>
+                                <p>kieso.jan@mercedes-benz.com</p>
                             </div>
                         </div>
 
@@ -2866,7 +2866,7 @@ https://templatemo.com/tm-592-glossy-touch
                             <div class="contact-item-icon">📍</div>
                             <div class="contact-item-text">
                                 <h4>Address</h4>
-                                <p>Beijing</p>
+                                <p>LSH Tower A 16F</p>
                             </div>
                         </div>
 
